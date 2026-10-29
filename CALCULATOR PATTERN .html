@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borang Ukuran Badan & Pengiraan Pola Automatik</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for gorgeous icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fcf5fe',
+                            100: '#f6e7fc',
+                            200: '#edd2f8',
+                            300: '#e0b0f2',
+                            400: '#c77ee6',
+                            500: '#ae27a7',
+                            600: '#912186',
+                            700: '#78196e',
+                            800: '#63175c',
+                            900: '#52174d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #fdf8fe 0%, #f4f6f9 100%);
+            min-height: 100vh;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 30px -5px rgba(174, 39, 167, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        }
+        canvas { 
+            background: #ffffff; 
+            border: 2px dashed #e2e8f0; 
+            border-radius: 0.75rem; 
+            width: 100%; 
+            height: auto; 
+            transition: all 0.3s ease;
+        }
+        canvas:hover {
+            border-color: #ae27a7;
+        }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(174, 39, 167, 0.15);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @media print {
+            body { background-color: white; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 25px; }
+            .card { box-shadow: none !important; padding: 0 !important; border: none !important; background: transparent !important; }
+            .result-section { display: block !important; }
+            .table-responsive { page-break-after: always; break-after: page; }
+            .pola-grid { display: block !important; }
+            .pola-card { page-break-after: always; break-after: page; border: none !important; padding: 0 !important; margin-bottom: 0 !important; box-shadow: none !important; }
+            canvas { max-width: 80% !important; margin: 0 auto; border: 1px solid #ccc !important; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header Banner for Students -->
+        <div class="text-center mb-8 no-print">
+            <div class="inline-flex items-center justify-center p-3 bg-brand-100 text-brand-600 rounded-2xl mb-3 shadow-sm">
+                <i class="fa-solid fa-shirt text-2xl"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Studio Fesyen</h1>
+            <p class="text-slate-600 text-sm sm:text-base mt-1">Sistem Pengiraan Ukuran Badan & Penjanaan Pola Asas Automatik</p>
+        </div>
+
+        <div class="card bg-white rounded-3xl p-6 sm:p-10 card-shadow border border-slate-100 transition-all">
+            
+            <!-- Print Header -->
+            <div class="print-header">
+                <h2 class="text-2xl font-bold text-slate-900">Lembaran Pengiraan Pola Asas Pakaian</h2>
+                <p class="text-sm text-slate-600 mt-1">Nama Pelajar: <span id="pNama" class="font-semibold underline"></span> | Tarikh: <span id="pTarikh" class="font-semibold"></span></p>
+                <hr class="my-4 border-slate-200">
+            </div>
+
+            <!-- Form Section Title -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6 no-print">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-ruler-combined text-brand-500"></i> Borang Ukuran Badan (cm)
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Masukkan ukuran dengan tepat untuk pengiraan formula & lukisan pola.</p>
+                </div>
+                <span class="hidden sm:inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-100">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Automatik
+                </span>
+            </div>
+
+            <!-- Error Notification Box -->
+            <div id="errorBox" class="hidden bg-amber-50 text-amber-800 border border-amber-200 p-4 rounded-2xl mb-6 text-sm no-print shadow-sm animate-fade-in">
+                <div class="flex items-center gap-2 font-bold mb-1">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Sila semak semula ukuran yang dimasukkan:
+                </div>
+                <ul id="errorList" class="list-disc pl-5 space-y-1 text-amber-700"></ul>
+            </div>
+
+            <!-- Measurement Form -->
+            <form id="formUkuran" class="no-print">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+                    
+                    <div class="sm:col-span-2">
+                        <label for="nama" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            <i class="fa-solid fa-user text-brand-500 mr-1"></i> Nama Pelajar / Pemakai
+                        </label>
+                        <input type="text" id="nama" placeholder="Contoh: Siti Aishah Binti Rahman" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label for="leher" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            1. Keliling Leher (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="leher" placeholder="e.g. 36" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="bentukLeher" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            2. Stail / Bentuk Leher
+                        </label>
+                        <div class="relative">
+                            <select id="bentukLeher" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 appearance-none">
+                                <option value="bulat">Leher Bulat Asas</option>
+                                <option value="v">Leher V (V-Neck)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="dada" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            3. Keliling Dada (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="dada" placeholder="e.g. 88" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="pinggang" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            4. Keliling Pinggang (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="pinggang" placeholder="e.g. 72" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="pinggul" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            5. Keliling Pinggul (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="pinggul" placeholder="e.g. 94" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="bahu" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            6. Lebar Bahu (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="bahu" placeholder="e.g. 38" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="labuhTengahBelakang" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            7. Labuh Tengah Belakang (cm)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.5" id="labuhTengahBelakang" placeholder="e.g. 38 (Standard 38 cm jika kosong)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium transition focus:bg-white focus:border-brand-500 pr-12">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button type="button" onclick="kiraSemuaPola()" class="w-full py-4 px-6 bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold rounded-xl shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2 cursor-pointer text-base">
+                    <i class="fa-solid fa-calculator"></i> Pengiraan & Lukis Pola Automatik
+                </button>
+            </form>
+
+            <!-- Result Section -->
+            <div id="hasilBahagian" class="result-section hidden mt-10 pt-8 border-t border-slate-100 animate-fade-in">
+                
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-brand-500"></i> Jadual Rumusan Formula Pola Asas
+                    </h3>
+                    <span class="text-xs text-slate-500 italic">Ukuran tepat dalam sentimeter (cm)</span>
+                </div>
+
+                <div class="table-responsive rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-10">
+                    <table class="w-full text-left border-collapse bg-white">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4">Bahagian / Titik Pola</th>
+                                <th class="py-3.5 px-4">Formula Terlibat</th>
+                                <th class="py-3.5 px-4 text-right">Ukuran Hasil</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Bukaan Lebar Leher (1-7)</td>
+                                <td class="py-3 px-4 text-slate-600">1/6 Lilit Leher</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resLebarLeher">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Kedalaman Leher Hadapan (1-8)</td>
+                                <td class="py-3 px-4 text-slate-600"><span id="labelFormulaDalamLeher">(1/6 Lilit Leher) + 1.0 cm</span></td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resDalamLeher">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Kedalaman Leher Belakang (1-2)</td>
+                                <td class="py-3 px-4 text-slate-600">Standard 1/2" (1.5 cm)</td>
+                                <td class="py-3 px-4 text-right font-bold text-slate-700">1.5 cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Lebar Bahu (1-5)</td>
+                                <td class="py-3 px-4 text-slate-600">Lebar Bahu ÷ 2</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resBahu">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Turun Kecuraman Bahu (5-6)</td>
+                                <td class="py-3 px-4 text-slate-600">Standard 1" (2.5 cm)</td>
+                                <td class="py-3 px-4 text-right font-bold text-slate-700">2.5 cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Garisan Dada Hadapan (2-9)</td>
+                                <td class="py-3 px-4 text-slate-600">(1/4 Lilit Dada) + 1 cm</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resDadaHadapan">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Garisan Dada Belakang (2-9)</td>
+                                <td class="py-3 px-4 text-slate-600">(1/4 Lilit Dada) + 1 cm</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resDadaBelakang">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Labuh Tengah Belakang (1-3)</td>
+                                <td class="py-3 px-4 text-slate-600">Ukuran Sebenar / Standard 38 cm</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resLabuhBelakang">38.0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Garisan Pinggang + Lisu (3-13)</td>
+                                <td class="py-3 px-4 text-slate-600">(1/4 Lilit Pinggang) + 2.5 cm</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resPinggang">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Garisan Pinggul + Kelonggaran (4-14)</td>
+                                <td class="py-3 px-4 text-slate-600">(1/4 Lilit Pinggul) + 2.0 cm</td>
+                                <td class="py-3 px-4 text-right font-bold text-brand-600"><span id="resPinggul">0</span> cm</td>
+                            </tr>
+                            <tr class="hover:bg-brand-50/40 transition">
+                                <td class="py-3 px-4 font-semibold text-slate-800">Labuh Punggung / Pinggul (3-4)</td>
+                                <td class="py-3 px-4 text-slate-600">Standard 8" (20 cm)</td>
+                                <td class="py-3 px-4 text-right font-bold text-slate-700">20.0 cm</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-shapes text-brand-500"></i> Visual Pola Asas Terjana Automatik
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Reka bentuk lakaran pola berskala interaktif untuk panduan potongan fabrik.</p>
+                </div>
+
+                <div class="pola-grid grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                    <div class="pola-card bg-slate-50/60 p-4 rounded-2xl border border-slate-200 text-center shadow-sm">
+                        <canvas id="canvasBelakang" width="280" height="420" class="mx-auto shadow-sm"></canvas>
+                        <div class="mt-3 font-bold text-slate-700 text-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-rotate-180 text-brand-500 text-xs"></i> Pola Badan Belakang
+                        </div>
+                    </div>
+                    <div class="pola-card bg-slate-50/60 p-4 rounded-2xl border border-slate-200 text-center shadow-sm">
+                        <canvas id="canvasHadapan" width="280" height="420" class="mx-auto shadow-sm"></canvas>
+                        <div class="mt-3 font-bold text-slate-700 text-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-shirt text-brand-500 text-xs"></i> Pola Badan Hadapan
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="btnCetak" class="no-print w-full py-4 px-6 bg-slate-800 hover:bg-slate-900 active:scale-[0.99] text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer text-base" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Simpan PDF / Cetak Lembaran Pola
+                </button>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-6 text-xs text-slate-400 no-print">
+            Modul Pendidikan Kemahiran Jahitan &middot; Dicipta khas untuk kemudahan pelajar
+        </div>
+    </div>
+
+<script>
+    function kiraSemuaPola() {
+        let nama = document.getElementById('nama').value.trim() || "Pelajar";
+        let leher = parseFloat(document.getElementById('leher').value);
+        let bentukLeher = document.getElementById('bentukLeher').value;
+        let dada = parseFloat(document.getElementById('dada').value);
+        let pinggang = parseFloat(document.getElementById('pinggang').value);
+        let pinggul = parseFloat(document.getElementById('pinggul').value);
+        let bahu = parseFloat(document.getElementById('bahu').value);
+        let labuhBelakang = parseFloat(document.getElementById('labuhTengahBelakang').value) || 38;
+
+        let errorBox = document.getElementById('errorBox');
+        let errorList = document.getElementById('errorList');
+        errorList.innerHTML = "";
+
+        let errors = [];
+        if (isNaN(leher) || leher <= 0) errors.push("Sila masukkan nilai Keliling Leher yang sah.");
+        if (isNaN(dada) || dada <= 0) errors.push("Sila masukkan nilai Keliling Dada yang sah.");
+        if (isNaN(pinggang) || pinggang <= 0) errors.push("Sila masukkan nilai Keliling Pinggang yang sah.");
+        if (isNaN(pinggul) || pinggul <= 0) errors.push("Sila masukkan nilai Keliling Pinggul yang sah.");
+        if (isNaN(bahu) || bahu <= 0) errors.push("Sila masukkan nilai Lebar Bahu yang sah.");
+
+        if (errors.length > 0) {
+            errors.forEach(err => {
+                let li = document.createElement('li');
+                li.textContent = err;
+                errorList.appendChild(li);
+            });
+            errorBox.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        errorBox.style.display = 'none';
+
+        let lebarLeher = leher / 6;
+        let dalamLeherHadapan = (bentukLeher === 'bulat') ? (leher / 6) + 1.0 : (leher / 6) + 6.0;
+        let hasilBahu = bahu / 2;
+        
+        let hasilDadaHadapan = (dada / 4) + 1.0;
+        let hasilDadaBelakang = (dada / 4) + 1.0;
+
+        let hasilPinggang = (pinggang / 4) + 2.5;
+        let hasilPinggul = (pinggul / 4) + 2.0;
+
+        document.getElementById('labelFormulaDalamLeher').innerText = (bentukLeher === 'bulat') ? "(1/6 Lilit Leher) + 1.0 cm" : "(1/6 Lilit Leher) + 6.0 cm (Leher V)";
+        document.getElementById('resLebarLeher').innerText = lebarLeher.toFixed(1);
+        document.getElementById('resDalamLeher').innerText = dalamLeherHadapan.toFixed(1);
+        document.getElementById('resBahu').innerText = hasilBahu.toFixed(1);
+        document.getElementById('resDadaHadapan').innerText = hasilDadaHadapan.toFixed(1);
+        document.getElementById('resDadaBelakang').innerText = hasilDadaBelakang.toFixed(1);
+        document.getElementById('resLabuhBelakang').innerText = labuhBelakang.toFixed(1);
+        document.getElementById('resPinggang').innerText = hasilPinggang.toFixed(1);
+        document.getElementById('resPinggul').innerText = hasilPinggul.toFixed(1);
+
+        document.getElementById('pNama').innerText = nama;
+        document.getElementById('pTarikh').innerText = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        let hasilSect = document.getElementById('hasilBahagian');
+        hasilSect.style.display = 'block';
+        
+        // Smooth scroll to results
+        hasilSect.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        let anggaranKeruk = 18; 
+        lukisPolaBelakang(lebarLeher, hasilBahu, anggaranKeruk, hasilDadaBelakang, labuhBelakang, hasilPinggang, hasilPinggul);
+        lukisPolaHadapan(lebarLeher, dalamLeherHadapan, hasilBahu, anggaranKeruk, hasilDadaHadapan, labuhBelakang, hasilPinggang, hasilPinggul, bentukLeher);
+    }
+
+    function lukisPolaBelakang(lebarLeher, bahu, keruk, dada, labuh, pinggang, pinggul) {
+        let c = document.getElementById("canvasBelakang");
+        let ctx = c.getContext("2d");
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        let scale = 4.2;
+        let startX = 45;
+        let startY = 35;
+
+        let p1 = { x: startX, y: startY };
+        let p2 = { x: startX, y: startY + (1.8 * scale) };
+        let p7 = { x: startX + (lebarLeher * scale), y: startY };
+        let p5 = { x: startX + (bahu * scale), y: startY };
+        let p6 = { x: startX + (bahu * scale), y: startY + (2.5 * scale) };
+
+        let pDadaY = startY + (keruk * scale);
+        let pDadaX = startX + (dada * scale);
+        let pPinggangY = startY + ((keruk + 18) * scale);
+        let pPinggangX = startX + (pinggang * scale);
+        let pPinggulY = pPinggangY + (20.3 * scale);
+        let pPinggulX = startX + (pinggul * scale);
+
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.fillStyle = "#faf5fb";
+        ctx.moveTo(p1.x, p2.y);
+        ctx.quadraticCurveTo(p1.x + (lebarLeher * scale * 0.4), p2.y, p7.x, p7.y);
+        ctx.lineTo(p6.x, p6.y);
+        ctx.quadraticCurveTo(p6.x - 15, pDadaY - 10, pDadaX, pDadaY);
+        ctx.quadraticCurveTo(pPinggangX - 5, pPinggangY, pPinggangX, pPinggangY);
+        ctx.quadraticCurveTo(pPinggulX + 5, pPinggulY - 20, pPinggulX, pPinggulY);
+        ctx.lineTo(startX, pPinggulY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ae27a7";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#64748b";
+
+        ctx.beginPath(); ctx.moveTo(p1.x, startY); ctx.lineTo(p5.x, startY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pDadaY); ctx.lineTo(pDadaX, pDadaY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pPinggangY); ctx.lineTo(pPinggangX, pPinggangY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pPinggulY); ctx.lineTo(pPinggulX, pPinggulY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p5.x, startY); ctx.lineTo(p6.x, p6.y); ctx.stroke();
+
+        ctx.font = "bold 9px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillStyle = "#ae27a7";
+        ctx.fillText("Garis Bahu", p1.x + ((p5.x - p1.x) / 2) - 18, startY - 6);
+        ctx.fillText("Garis Dada", p1.x + ((pDadaX - p1.x) / 2) - 18, pDadaY - 6);
+        ctx.fillText("Garis Pinggang", p1.x + ((pPinggangX - p1.x) / 2) - 28, pPinggangY - 6);
+        ctx.fillText("Garis Pinggul", p1.x + ((pPinggulX - p1.x) / 2) - 24, pPinggulY - 6);
+
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "bold 10px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText("1", p1.x - 14, p1.y + 3);
+        ctx.fillText("2", p1.x - 14, p2.y + 4);
+        ctx.fillText("7", p7.x - 3, p7.y - 6);
+        ctx.fillText("5", p5.x - 3, startY - 6);
+        ctx.fillText("6", p6.x + 5, p6.y);
+        ctx.fillText("2", p1.x - 14, pDadaY + 3);
+        ctx.fillText("9", pDadaX + 5, pDadaY + 3);
+        ctx.fillText("3", p1.x - 14, pPinggangY + 3);
+        ctx.fillText("13", pPinggangX + 5, pPinggangY + 3);
+        ctx.fillText("4", p1.x - 14, pPinggulY + 3);
+        ctx.fillText("14", pPinggulX + 5, pPinggulY + 3);
+    }
+
+    function lukisPolaHadapan(lebarLeher, dalamLeher, bahu, keruk, dada, labuh, pinggang, pinggul, bentukLeher) {
+        let c = document.getElementById("canvasHadapan");
+        let ctx = c.getContext("2d");
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        let scale = 4.2;
+        let startX = 235;
+        let startY = 35;
+
+        let p1 = { x: startX, y: startY };
+        let p7 = { x: startX - (lebarLeher * scale), y: startY };
+        let p8 = { x: startX, y: startY + (dalamLeher * scale) };
+        let p5 = { x: startX - (bahu * scale), y: startY };
+        let p6 = { x: startX - (bahu * scale), y: startY + (2.5 * scale) };
+
+        let pDadaY = startY + (keruk * scale);
+        let pDadaX = startX - (dada * scale);
+        let pPinggangY = startY + ((keruk + 18) * scale);
+        let pPinggangX = startX - (pinggang * scale);
+        let pPinggulY = pPinggangY + (20.3 * scale);
+        let pPinggulX = startX - (pinggul * scale);
+
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.fillStyle = "#faf5fb";
+        ctx.moveTo(p1.x, p8.y);
+
+        if (bentukLeher === 'v') {
+            ctx.lineTo(p7.x, p7.y);
+        } else {
+            ctx.quadraticCurveTo(p7.x + (lebarLeher * scale * 0.1), p8.y, p7.x, p7.y);
+        }
+
+        ctx.lineTo(p6.x, p6.y);
+        ctx.quadraticCurveTo(p6.x + 20, pDadaY - 10, pDadaX, pDadaY);
+        ctx.quadraticCurveTo(pPinggangX + 5, pPinggangY, pPinggangX, pPinggangY);
+        ctx.quadraticCurveTo(pPinggulX - 5, pPinggulY - 20, pPinggulX, pPinggulY);
+        ctx.lineTo(startX, pPinggulY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ae27a7";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#64748b";
+
+        ctx.beginPath(); ctx.moveTo(p1.x, startY); ctx.lineTo(p5.x, startY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pDadaY); ctx.lineTo(pDadaX, pDadaY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pPinggangY); ctx.lineTo(pPinggangX, pPinggangY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1.x, pPinggulY); ctx.lineTo(pPinggulX, pPinggulY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p5.x, startY); ctx.lineTo(p6.x, p6.y); ctx.stroke();
+
+        ctx.font = "bold 9px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillStyle = "#ae27a7";
+        ctx.fillText("Garis Bahu", p1.x - ((p1.x - p5.x) / 2) - 18, startY - 6);
+        ctx.fillText("Garis Dada", p1.x - ((p1.x - pDadaX) / 2) - 18, pDadaY - 6);
+        ctx.fillText("Garis Pinggang", p1.x - ((p1.x - pPinggangX) / 2) - 28, pPinggangY - 6);
+        ctx.fillText("Garis Pinggul", p1.x - ((p1.x - pPinggulX) / 2) - 24, pPinggulY - 6);
+
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "bold 10px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText("1", p1.x + 5, p1.y + 4);
+        ctx.fillText("7", p7.x - 4, p7.y - 6);
+        ctx.fillText("8", p1.x + 5, p8.y + 3);
+        ctx.fillText("5", p5.x - 4, startY - 6);
+        ctx.fillText("6", p6.x - 12, p6.y);
+        ctx.fillText("2", p1.x + 5, pDadaY + 3);
+        ctx.fillText("9", pDadaX - 12, pDadaY + 3);
+        ctx.fillText("3", p1.x + 5, pPinggangY + 3);
+        ctx.fillText("13", pPinggangX - 18, pPinggangY + 3);
+        ctx.fillText("4", p1.x + 5, pPinggulY + 3);
+        ctx.fillText("14", pPinggulX - 18, pPinggulY + 3);
+    }
+</script>
+
+</body>
+</html>
